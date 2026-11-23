@@ -48,7 +48,12 @@ const PRODUCTS = [
         img: 'images/basin-bolt-130.png',
         fit: 'photo',
       },
-      { name: '세면기 볼트 [모델명 3]', spec: ['재질 : [입력]', '규격 : [입력]'], img: '' },
+      {
+        name: '세면기 볼트 150mm',
+        spec: ['앙카볼트 : 스텐 304', '너트 : 스텐 M8', '와셔 : 스텐', '고무와셔 : 합성고무', '칼브럭 : 나이론 12파이'],
+        img: 'images/basin-bolt-150.png',
+        fit: 'photo',
+      },
     ],
   },
   {

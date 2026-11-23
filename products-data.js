@@ -22,7 +22,8 @@ const PRODUCTS = [
       {
         name: '직편심 플랜지',
         spec: ['편심 거리 : 32.5 mm'],
-        img: 'images/offset-flange.png',
+        img: 'images/offset-flange.png?v=20261124',
+        fit: 'contain',
         link: 'product-offset-flange.html',
         is3d: true,
       },

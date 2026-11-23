@@ -394,6 +394,7 @@ button { font: inherit; }
 .item-body h3 { font-size: 20px; font-weight: 800; letter-spacing: -0.02em; margin-top: 4px; color: var(--ink); }
 .item-spec { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--gray-100); color: var(--gray-500); font-size: 15px; }
 .item-spec li + li { margin-top: 3px; }
+.item-spec:empty { display: none; }
 .item-btn { margin-top: auto; padding-top: 22px; font-weight: 700; color: var(--navy); font-size: 15px; }
 .item-btn span { display: inline-block; transition: transform .2s; }
 .item:hover .item-btn { color: var(--blue); }

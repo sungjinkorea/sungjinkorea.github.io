@@ -186,11 +186,12 @@ button { font: inherit; }
 
 /* ===== 제품소개 ===== */
 .products { background: linear-gradient(180deg, var(--gray-50) 0%, var(--white) 100%); }
-.product-list { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr; gap: 18px; height: 520px; transition: grid-template-columns .6s var(--ease); }
-.product-list:has(.product:nth-child(1):hover) { grid-template-columns: 1.6fr 1fr 1fr 1fr; }
-.product-list:has(.product:nth-child(2):hover) { grid-template-columns: 1fr 1.6fr 1fr 1fr; }
-.product-list:has(.product:nth-child(3):hover) { grid-template-columns: 1fr 1fr 1.6fr 1fr; }
-.product-list:has(.product:nth-child(4):hover) { grid-template-columns: 1fr 1fr 1fr 1.6fr; }
+.product-list { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr 1fr; gap: 18px; height: 520px; transition: grid-template-columns .6s var(--ease); }
+.product-list:has(.product:nth-child(1):hover) { grid-template-columns: 1.6fr 1fr 1fr 1fr 1fr; }
+.product-list:has(.product:nth-child(2):hover) { grid-template-columns: 1fr 1.6fr 1fr 1fr 1fr; }
+.product-list:has(.product:nth-child(3):hover) { grid-template-columns: 1fr 1fr 1.6fr 1fr 1fr; }
+.product-list:has(.product:nth-child(4):hover) { grid-template-columns: 1fr 1fr 1fr 1.6fr 1fr; }
+.product-list:has(.product:nth-child(5):hover) { grid-template-columns: 1fr 1fr 1fr 1fr 1.6fr; }
 .product { position: relative; border-radius: var(--radius); overflow: hidden; background: var(--gray-100); isolation: isolate; }
 .product img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform .8s var(--ease); z-index: -2; }
 .product::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgba(8,22,44,0) 45%, rgba(8,22,44,.75) 100%); }
@@ -503,6 +504,7 @@ body.cmodal-open { overflow: hidden; }
   .section { padding: 100px 0; }
   .product-list, .product-list:has(.product:hover) { grid-template-columns: 1fr 1fr; height: auto; }
   .product { aspect-ratio: 4 / 3.4; }
+  .product:nth-child(odd):last-child { grid-column: 1 / -1; aspect-ratio: 8 / 3.4; }
   .product::before, .p-arrow { display: none; }
   .p-info p, .product-list:not(:hover) .product.is-on .p-info p, .product:hover .p-info p { max-height: none; }
   .steps { grid-template-columns: repeat(3, 1fr); }
@@ -550,7 +552,7 @@ body.cmodal-open { overflow: hidden; }
   .sec-head { margin-bottom: 36px; }
   .eyebrow { font-size: 14px; }
   .product-list, .product-list:has(.product:hover) { grid-template-columns: 1fr; gap: 14px; }
-  .product { aspect-ratio: 16 / 11; }
+  .product, .product:nth-child(odd):last-child { aspect-ratio: 16 / 11; }
   .p-info { left: 22px; bottom: 20px; }
   .p-info h3 { font-size: 22px; }
   .steps { grid-template-columns: 1fr; }

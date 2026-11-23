@@ -133,6 +133,10 @@ window.OffsetFlange3D = function (box, opt) {
   const ceil = circ(new THREE.Shape(), dd, 0, P.PIPE_OD / 2, false); ceil.holes.push(lens());
   slab(ins, ceil, D.Z_PLATE_BOT, D.Z_PLATE_TOP - D.Z_PLATE_BOT, mIns);
   lathe(ins, M.pipe, mIns, dd, 0);
+  // 배관 아래쪽 홈에 끼운 O-링 (단면이 둥근 고무링, 인서트와 함께 움직임)
+  const pipeOring = [];
+  for (let i = 0; i < 32; i++) { const t = Math.PI * 2 * i / 32; pipeOring.push([54.0 + 2.0 * Math.cos(t), -35.5 + 2.0 * Math.sin(t)]); }
+  lathe(ins, pipeOring, mOr, dd, 0);
 
   // ---- O-링 ----
   const orr = new THREE.Group();

@@ -72,7 +72,7 @@ if (catalog && typeof PRODUCTS !== 'undefined') {
 
   const itemHTML = (c, it) => {
     const img = it.img
-      ? `<img src="${esc(it.img)}" alt="${esc(it.name)}" loading="lazy"${/\.png$/i.test(it.img) ? ' class="contain"' : ''}>`
+      ? `<img src="${esc(it.img)}" alt="${esc(it.name)}" loading="lazy"${it.fit ? ` class="${esc(it.fit)}"` : /\.png$/i.test(it.img) ? ' class="contain"' : ''}>`
       : icon(c.icon, 'item-ph');
     const body = `
       <div class="item-img">${img}${it.is3d ? '<span class="item-3d">3D</span>' : ''}</div>

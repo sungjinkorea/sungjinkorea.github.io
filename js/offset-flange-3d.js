@@ -4,8 +4,8 @@
 // =====================================================================
 window.OffsetFlange3D = function (box, opt) {
   opt = opt || {};
-  // 홈페이지 보여주기용 근사 형상입니다. 실제 제품 도면 치수와 다르며, 세부 구조는 생략했습니다.
-  const M = {"P":{"FLANGE_OD":180,"RING_H":16,"OFFSET":32.5,"PIPE_OD":110,"PIPE_ID":102,"BORE_D":100},"D":{"Z_END":-50,"Z_FLOOR_TOP":0,"Z_PLATE_TOP":-3,"Z_PLATE_BOT":-6},"wall":[64,66.5],"lip":[57,61],"insert":[[50,-3],[55,-3],[57.5,4],[63.5,4],[63.5,19],[57.5,19],[57.5,13],[51.5,13],[50,15]],"oring":[[51.6,13.05],[57.4,13.05],[57.4,16.5],[51.6,16.5]],"pipe":[[51,-4],[55,-4],[55,-45],[53.5,-50],[51,-50]],"ribs":[15,45,75,105,135,165,195,225,255,285,315,345],"ribT":2,"ribR":[67,85.7],"floorR":51};
+  // 홈페이지 보여주기용 근사 형상입니다. 실제 제품 도면 치수와 다릅니다.
+  const M = {"P":{"FLANGE_OD":180.0,"RING_H":15.5,"LIP_H":3.5,"LIP_OD":129.0,"TOTAL_LEN":68.5,"PIPE_OD":109.5,"OFFSET":32.5,"GROOVE_W":4.5,"PIPE_ID":101.5,"GROOVE_DEPTH":2.5,"GROOVE1_Z":38.0,"GROOVE2_Z":52.5,"TIP_CHAMFER_LEN":6.0,"TIP_OD":106.0,"BORE_D":101.0,"CBORE_D":116.0,"CBORE_DEPTH":6.5,"PLATE_T":3.5,"BOSS_R":76.0,"BOSS_OD":10.0,"BOSS_ANGLES":[31.5,121.5,211.5,301.5]},"D":{"Z_RING_TOP":15.5,"Z_TOP":19.0,"Z_END":-49.5,"Z_FLOOR_TOP":0.0,"Z_PLATE_TOP":-3.0,"Z_PLATE_BOT":-6.5},"ring":[[58.5,0.0],[89.0,0.0],[90.0,1.0],[90.0,14.5],[89.0,15.5],[86.0,15.5],[86.0,2.5],[67.0,2.5],[67.0,15.5],[64.5,15.5],[64.5,2.5],[60.5,2.5]],"insert":[[50.5,-3.0],[56.0,-3.0],[60.0,2.5],[57.0,2.5],[57.0,6.5],[64.2,6.5],[64.2,18.5],[63.7,19.0],[58.0,19.0],[58.0,13.0],[52.5,13.0],[50.5,15.5]],"oring":[[52.6,13.05],[57.9,13.05],[57.9,16.5],[52.6,16.5]],"pipe":[[50.5,-4.0],[54.5,-4.0],[54.5,-19.0],[52.0,-19.0],[52.0,-23.5],[54.5,-23.5],[54.5,-33.5],[52.0,-33.5],[52.0,-37.5],[54.5,-37.5],[54.5,-43.5],[53.0,-49.5],[50.5,-49.5]],"ribs":[24.0,39.0,51.0,62.0,114.0,129.0,141.0,152.0,204.0,219.0,231.0,242.0,294.0,309.0,321.0,332.0],"ribT":2.0,"ribR":[67.0,86.0],"bosses":[[31.5,3.0],[121.5,4.5],[211.5,3.0],[301.5,4.5]],"slots":[[0,70.5,4.5,20.0],[0,80.0,5.5,20.0],[90,70.5,4.5,20.0],[90,80.0,5.5,20.0],[180,70.5,4.5,20.0],[180,80.0,5.5,20.0],[270,70.5,4.5,20.0],[270,80.0,5.5,20.0]],"floorR":51.5,"wall":[64.5,67.0],"hole":62.0,"cb":4.0};
   const P = M.P, D = M.D;
   const rad = (a) => a * Math.PI / 180;
 
@@ -94,12 +94,24 @@ window.OffsetFlange3D = function (box, opt) {
 
   // ---- 링 하우징 ----
   const ring = new THREE.Group();
-  const R = P.FLANGE_OD / 2, H = P.RING_H, [w1, w2] = M.wall, [l1, l2] = M.lip;
+  const R = P.FLANGE_OD / 2, H = P.RING_H, rp = M.ring;
   lathe(ring, [[R - 4, 0], [R - 1, 0], [R, 1], [R, H - 1], [R - 1, H], [R - 4, H]], mRing);
-  lathe(ring, [[w1, 2.4], [w2, 2.4], [w2, H], [w1, H]], mRing);
-  lathe(ring, [[l1, 0], [l2, 0], [l2, 2.4], [l1, 2.4]], mRing);
+  lathe(ring, [[M.wall[0], 2.4], [M.wall[1], 2.4], [M.wall[1], H], [M.wall[0], H]], mRing);
+  lathe(ring, [rp[0], [M.hole, 0], [M.hole, 2.4], rp[rp.length - 1]], mRing);
   const plate = circ(new THREE.Shape(), 0, 0, R - 4, false);
-  plate.holes.push(circ(new THREE.Path(), 0, 0, l2, true));
+  plate.holes.push(circ(new THREE.Path(), 0, 0, M.hole, true));
+  function slotPoly([a0, rc, w, hs], n = 36, nc = 10) {
+    const pts = [], t1 = rad(a0 - hs), t2 = rad(a0 + hs), ro = rc + w / 2, ri = rc - w / 2;
+    for (let i = 0; i <= n; i++) { const t = t1 + (t2 - t1) * i / n; pts.push([ro * Math.cos(t), ro * Math.sin(t)]); }
+    let cx = rc * Math.cos(t2), cy = rc * Math.sin(t2);
+    for (let i = 1; i < nc; i++) { const t = t2 + Math.PI * i / nc; pts.push([cx + w / 2 * Math.cos(t), cy + w / 2 * Math.sin(t)]); }
+    for (let i = 0; i <= n; i++) { const t = t2 - (t2 - t1) * i / n; pts.push([ri * Math.cos(t), ri * Math.sin(t)]); }
+    cx = rc * Math.cos(t1); cy = rc * Math.sin(t1);
+    for (let i = 1; i < nc; i++) { const t = t1 + Math.PI + Math.PI * i / nc; pts.push([cx + w / 2 * Math.cos(t), cy + w / 2 * Math.sin(t)]); }
+    return pts;
+  }
+  M.slots.map((s) => slotPoly(s)).forEach((pts) => { const h = new THREE.Path(); h.moveTo(pts[0][0], pts[0][1]); pts.slice(1).forEach((q) => h.lineTo(q[0], q[1])); h.closePath(); plate.holes.push(h); });
+  M.bosses.forEach(([a, hd]) => plate.holes.push(circ(new THREE.Path(), P.BOSS_R * Math.cos(rad(a)), P.BOSS_R * Math.sin(rad(a)), hd / 2, true)));
   slab(ring, plate, 0, 2.4, mRing);
   const [q1, q2] = M.ribR, rh = H - 2;
   M.ribs.forEach((a) => {
@@ -107,6 +119,10 @@ window.OffsetFlange3D = function (box, opt) {
     const rc = (q1 + q2) / 2;
     g.rotateY(rad(a)); g.translate(rc * Math.cos(rad(a)), 2 + rh / 2, -rc * Math.sin(rad(a)));
     add(ring, g, mRing);
+  });
+  M.bosses.forEach(([a, hd]) => {
+    const x = P.BOSS_R * Math.cos(rad(a)), y = P.BOSS_R * Math.sin(rad(a)), ro = P.BOSS_OD / 2;
+    lathe(ring, [[hd / 2, 2], [ro, 2], [ro, H - 1], [M.cb, H - 1], [M.cb, H - 3], [hd / 2, H - 3]], mRing, x, -y);
   });
 
   // ---- 편심 인서트 ----

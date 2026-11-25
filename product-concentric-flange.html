@@ -61,8 +61,7 @@
           <div class="stage" id="stage">
             <span class="stage-badge">3D</span>
             <div class="legend" aria-hidden="true">
-              <span><i style="background:#2e3135"></i>링 하우징</span>
-              <span><i style="background:#484c52"></i>정심 인서트</span>
+              <span><i style="background:#2e3135"></i>플랜지 본체 (일체형)</span>
               <span><i style="background:#141414"></i>패킹 · O-링</span>
             </div>
             <p class="stage-hint" id="hint">드래그해서 돌려보세요 · 휠/두 손가락으로 확대</p>
@@ -74,18 +73,23 @@
             <button type="button" id="bHome">원위치</button>
             <button type="button" id="bIntro">조립 과정 보기</button>
           </div>
+          <div class="v-spin">
+            <label for="rot">아래 홈 보기</label>
+            <input type="range" id="rot" min="0" max="180" step="1" value="0">
+            <output id="rotOut" for="rot">0°</output>
+          </div>
         </div>
 
         <!-- 제품 정보 -->
         <div class="pd-info">
           <span class="pd-cat">양변기 플랜지</span>
           <h1>정심 플랜지</h1>
-          <p class="pd-desc">배관이 링 하우징 중심에 바로 이어지는 플랜지입니다. 바닥 배수관이 제자리에 있을 때 양변기를 곧게 설치합니다.</p>
+          <p class="pd-desc">링과 배관이 한 몸으로 된 일체형 플랜지입니다. 배관이 플랜지 중심에 있어, 바닥 배수관이 제자리에 있을 때 양변기를 곧게 설치합니다.</p>
 
           <ul class="pd-points">
             <li><b>정심 구조</b>배관 중심이 링 중심과 같아 편심 없이 바로 연결됩니다.</li>
-            <li><b>구성</b>링 하우징 · 정심 인서트 · 패킹 · O-링, T볼트 · 와셔 · 캡 각 2개가 들어 있습니다.</li>
-            <li><b>보강 리브</b>링 하우징 안쪽에 보강 리브가 들어가 있습니다.</li>
+            <li><b>구성</b>일체형 본체에 패킹과 O-링만 끼우면 됩니다. T볼트 · 와셔 · 캡 각 2개가 함께 들어 있습니다.</li>
+            <li><b>보강 리브</b>플랜지 안쪽에 보강 리브가 들어가 있습니다.</li>
           </ul>
 
           <table class="pd-spec">
@@ -145,19 +149,22 @@
   <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/environments/RoomEnvironment.js"></script>
-  <script src="js/offset-flange-3d.js?v=20261126a"></script>
+  <script src="js/offset-flange-3d.js?v=20261126d"></script>
   <script>
     (function () {
       const stage = document.getElementById('stage');
       let v;
-      // 정심: 편심 0, 전체 흑색, 인서트 윗면에 넓은 패킹 (치수는 사진 기준 추정)
+      const syncRot = (d) => { document.getElementById('rot').value = d; document.getElementById('rotOut').textContent = d + '°'; };
+      // 정심: 편심 0, 링·배관 일체형(인서트 없음), 전체 흑색, 윗면 패킹 + 배관 O-링 (치수는 사진 기준 추정)
       const CONCENTRIC = {
         offset: 0,
-        colors: { ring: 0x2e3135, insert: 0x484c52, oring: 0x141414 },
+        oneBody: true,
+        tilt: 55, // 조립 뒤 앞으로 55° 기울여 아래 배관(홈 2개)을 보여줌
+        colors: { ring: 0x2e3135, oring: 0x141414 },
         packing: [[44, 16], [52.5, 16], [52.6, 13.05], [57.9, 13.05], [57.9, 19], [44, 19]],
-        spinAfterIntro: false,
       };
-      try { v = OffsetFlange3D(stage, Object.assign({ intro: true }, CONCENTRIC)); }
+      // 조립이 끝나면 앞으로 기울여 아래 배관 홈을 보여주고, 슬라이더로 0~180° 직접 기울일 수 있음
+      try { v = OffsetFlange3D(stage, Object.assign({ intro: true, onInsertRotate: syncRot }, CONCENTRIC)); }
       catch (err) { document.getElementById('fallback').hidden = false; document.getElementById('hint').hidden = true; return; }
 
       const bE = document.getElementById('bExplode');
@@ -177,6 +184,9 @@
       });
       // 원위치: 끌어 옮긴 부품을 제자리로 + 기본 시점으로
       document.getElementById('bHome').addEventListener('click', () => { v.reset(); v.view('iso'); });
+      const rot = document.getElementById('rot');
+      const out = document.getElementById('rotOut');
+      rot.addEventListener('input', () => { v.rotateInsert(+rot.value); out.textContent = rot.value + '°'; });
     })();
   </script>
 </body>

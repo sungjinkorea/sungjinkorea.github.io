@@ -128,28 +128,40 @@ window.OffsetFlange3D = function (box, opt) {
     lathe(ring, [[hd / 2, 2], [ro, 2], [ro, H - 1], [M.cb, H - 1], [M.cb, H - 3], [hd / 2, H - 3]], mRing, x, -y);
   });
 
-  // ---- 편심 인서트 (정심이면 배관이 인서트 바로 아래로 이어짐) ----
+  // ---- 편심 인서트 ----
+  // opt.oneBody: 정심 플랜지처럼 링과 배관이 한 몸인 제품 (인서트 없음, O-링만 끼움)
   const ins = new THREE.Group();
-  lathe(ins, M.insert, mIns);
-  if (dd) {
+  const pipeOr = new THREE.Group();
+  const pipeOring = [];
+  for (let i = 0; i < 32; i++) { const t = Math.PI * 2 * i / 32; pipeOring.push([54.0 + 2.0 * Math.cos(t), -35.5 + 2.0 * Math.sin(t)]); }
+  if (opt.oneBody) {
+    // 링 안쪽 벽부터 배관 위쪽까지 채우는 몸통 단면 [r, z]
+    lathe(ring, [[r1, 15.5], [52.5, 13], [58, 13], [58, 19], [63.7, 19], [64.5, 18.2], [64.5, 2.4], [60.5, 2.4], [58.5, 0], [54.5, 0], [54.5, -4], [r1, -4]], mRing);
+    lathe(ring, M.pipe, mRing);
+    lathe(pipeOr, pipeOring, mOr); // 배관 아래쪽 홈의 O-링 — 따로 끼우는 부품
+  } else {
+    lathe(ins, M.insert, mIns);
     const floor = circ(new THREE.Shape(), 0, 0, M.floorR, false); floor.holes.push(lens());
     slab(ins, floor, D.Z_PLATE_TOP, D.Z_FLOOR_TOP - D.Z_PLATE_TOP, mIns);
     const ceil = circ(new THREE.Shape(), dd, 0, P.PIPE_OD / 2, false); ceil.holes.push(lens());
     slab(ins, ceil, D.Z_PLATE_BOT, D.Z_PLATE_TOP - D.Z_PLATE_BOT, mIns);
-  } else {
-    lathe(ins, [[r1, -4.5], [P.PIPE_OD / 2, -4.5], [P.PIPE_OD / 2, -3], [r1, -3]], mIns);
+    lathe(ins, M.pipe, mIns, dd, 0);
+    // 배관 아래쪽 홈에 끼운 O-링 (단면이 둥근 고무링, 인서트와 함께 움직임)
+    lathe(ins, pipeOring, mOr, dd, 0);
   }
-  lathe(ins, M.pipe, mIns, dd, 0);
-  // 배관 아래쪽 홈에 끼운 O-링 (단면이 둥근 고무링, 인서트와 함께 움직임)
-  const pipeOring = [];
-  for (let i = 0; i < 32; i++) { const t = Math.PI * 2 * i / 32; pipeOring.push([54.0 + 2.0 * Math.cos(t), -35.5 + 2.0 * Math.sin(t)]); }
-  lathe(ins, pipeOring, mOr, dd, 0);
 
   // ---- O-링 ----
   const orr = new THREE.Group();
-  lathe(orr, opt.packing || M.oring, mOr); // opt.packing: 인서트 윗면 패킹 단면 [[r, z], ...]
+  lathe(orr, opt.packing || M.oring, mOr); // opt.packing: 윗면 패킹 단면 [[r, z], ...]
 
-  const all = new THREE.Group(); all.add(ring, ins, orr); scene.add(all);
+  const all = new THREE.Group(); all.add(ring, ins, orr, pipeOr);
+  // opt.tilt: 제품을 앞으로 기울여 아래쪽 배관(홈 2개)을 보여줌 (정심 일체형).
+  //           값은 조립 뒤 자동으로 기울여 보여줄 각도. 기울기 중심은 제품 높이 가운데.
+  const pivot = new THREE.Group(); pivot.add(all); scene.add(pivot);
+  if (opt.tilt) { pivot.position.y = -15; all.position.y = 15; }
+  // 돌리기 대상: 직편심은 인서트(세로축), 정심은 제품 전체(가로축으로 기울이기)
+  const turn = opt.tilt ? pivot : opt.oneBody ? all : ins;
+  function applyTurn(deg) { if (opt.tilt) turn.rotation.x = -rad(deg); else turn.rotation.y = rad(deg); }
 
   // 바닥 그림자 (바닥면은 보이지 않고 그림자만 맺힘)
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(1600, 1600), new THREE.ShadowMaterial({ opacity: 0.17 }));
@@ -157,11 +169,13 @@ window.OffsetFlange3D = function (box, opt) {
   ground.position.y = D.Z_END - 0.6;
   ground.receiveShadow = true;
   // scene.add(ground); // 바닥 그림자 끔
-  const PARTS = [ring, ins, orr];
+  const PARTS = opt.oneBody ? [ring, orr, pipeOr] : [ring, ins, orr];
   ring.userData = { lift: 0, off: new THREE.Vector3(), k: 0 };
   // O-링은 인서트 윗부분 홈(카운터보어)에 들어감 → 인서트보다 위에서 내려옴
   ins.userData = { lift: 55, off: new THREE.Vector3(), k: 0, introDelay: 0 };
-  orr.userData = { lift: 82, off: new THREE.Vector3(), k: 0, introDelay: 700 };
+  orr.userData = { lift: opt.oneBody ? 55 : 82, off: new THREE.Vector3(), k: 0, introDelay: opt.oneBody ? 450 : 700 };
+  // 일체형: 배관 O-링은 아래에서 올라와 홈에 끼워짐
+  pipeOr.userData = { lift: -45, off: new THREE.Vector3(), k: 0, introDelay: 0 };
   let clipOn = false;
 
   // ---- 시점 ----
@@ -242,6 +256,7 @@ window.OffsetFlange3D = function (box, opt) {
     if (reduce) return;
     spin = null;
     explodeTo = 0; explode = 0; resetOffsets();
+    if (opt.tilt) setInsert(0); // 기울인 채로 조립되지 않게 바로 세움
     view('iso');
     intro = { t0: performance.now(), userCam: false };
     PARTS.forEach((g) => { g.userData.k = g === ring ? 0 : INTRO.amp; });
@@ -251,13 +266,13 @@ window.OffsetFlange3D = function (box, opt) {
     if (!intro) return;
     intro = null;
     PARTS.forEach((g) => { g.userData.k = 0; });
-    ins.rotation.y = rad(insDeg);
+    applyTurn(insDeg);
   }
   ctl.addEventListener('start', () => { if (intro) intro.userCam = true; });
   function stepIntro(now) {
     const t = now - intro.t0;
     let done = true;
-    [orr, ins].forEach((g) => {
+    PARTS.filter((g) => g !== ring).forEach((g) => {
       const p = clamp01((t - INTRO.hold - g.userData.introDelay) / INTRO.dur);
       if (p < 1) done = false;
       g.userData.k = INTRO.amp * dropCurve(p);
@@ -278,7 +293,7 @@ window.OffsetFlange3D = function (box, opt) {
   let spin = null;
   function setInsert(deg) {
     insDeg = deg;
-    ins.rotation.y = rad(deg);
+    applyTurn(deg);
     if (opt.onInsertRotate) opt.onInsertRotate(((Math.round(deg) % 360) + 360) % 360);
   }
   function startSpin() {
@@ -290,10 +305,17 @@ window.OffsetFlange3D = function (box, opt) {
     spin = null;
     setInsert(((Math.round(insDeg) % 360) + 360) % 360);
   }
+  // 정심(opt.tilt): 앞으로 기울여 아래 배관 홈을 보여주고, 잠시 멈췄다가 다시 세움
+  const TILT = { dur: 5200, up: 0.3, down: 0.7 };
   function stepSpin(now) {
-    const p = clamp01((now - spin.t0) / SPIN.dur);
+    const p = clamp01((now - spin.t0) / (opt.tilt ? TILT.dur : SPIN.dur));
     if (p <= 0) return;
-    setInsert(spin.from + 360 * easeInOut(p));
+    if (opt.tilt) {
+      const k = p < TILT.up ? easeInOut(p / TILT.up) : p < TILT.down ? 1 : 1 - easeInOut((p - TILT.down) / (1 - TILT.down));
+      setInsert(spin.from + (opt.tilt - spin.from) * k);
+    } else {
+      setInsert(spin.from + 360 * easeInOut(p));
+    }
     if (p >= 1) { const from = spin.from; spin = null; setInsert(from); }
   }
   if (opt.intro) playIntro();
@@ -317,7 +339,7 @@ window.OffsetFlange3D = function (box, opt) {
       backs.forEach((b) => { b.visible = on; }); clipOn = on;
       if (on) { if (intro) intro.userCam = true; view('front'); }
     },
-    rotateInsert(deg) { spin = null; insDeg = deg; if (!intro) ins.rotation.y = rad(deg); },
+    rotateInsert(deg) { spin = null; insDeg = deg; if (!intro) applyTurn(deg); },
     reset: resetOffsets,
     render: frame,
     canvas: cv,

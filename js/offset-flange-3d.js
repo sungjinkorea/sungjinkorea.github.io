@@ -60,9 +60,11 @@ window.OffsetFlange3D = function (box, opt) {
     };
   }
   // 링 하우징: 사출 PP 회색, 약간 광택 / 인서트: 아이보리 ABS / O-링: 무광 고무
-  const mRing = mat(0x6c7480, { roughness: 0.42, clearcoat: 0.25, clearcoatRoughness: 0.5, envMapIntensity: 0.18 });
-  const mIns = mat(0xd6cfbf, { roughness: 0.36, clearcoat: 0.35, clearcoatRoughness: 0.4, envMapIntensity: 0.16 });
-  const mOr = mat(0x1e1e1e, { roughness: 0.82, envMapIntensity: 0.1 });
+  // opt.colors 로 색을 바꿀 수 있음 (정심 플랜지는 전체 흑색)
+  const COL = Object.assign({ ring: 0x6c7480, insert: 0xd6cfbf, oring: 0x1e1e1e }, opt.colors);
+  const mRing = mat(COL.ring, { roughness: 0.42, clearcoat: 0.25, clearcoatRoughness: 0.5, envMapIntensity: 0.18 });
+  const mIns = mat(COL.insert, { roughness: 0.36, clearcoat: 0.35, clearcoatRoughness: 0.4, envMapIntensity: 0.16 });
+  const mOr = mat(COL.oring, { roughness: 0.82, envMapIntensity: 0.1 });
   const MATS = [mRing, mIns, mOr];
   const backs = [];
   function add(group, geo, m) {
@@ -87,8 +89,9 @@ window.OffsetFlange3D = function (box, opt) {
     g.rotateX(-Math.PI / 2); g.translate(0, z0, 0);
     add(group, g, m);
   }
-  const r1 = P.BORE_D / 2, r2 = P.PIPE_ID / 2, dd = P.OFFSET;
-  const xi = (dd * dd + r1 * r1 - r2 * r2) / (2 * dd), yi = Math.sqrt(r1 * r1 - xi * xi);
+  // opt.offset = 0 이면 정심 플랜지 (배관이 링 중심에 있음)
+  const r1 = P.BORE_D / 2, r2 = P.PIPE_ID / 2, dd = opt.offset != null ? opt.offset : P.OFFSET;
+  const xi = dd ? (dd * dd + r1 * r1 - r2 * r2) / (2 * dd) : 0, yi = Math.sqrt(Math.max(0, r1 * r1 - xi * xi));
   const f1 = Math.atan2(yi, xi), f2 = Math.atan2(yi, dd - xi);
   function lens() { const p = new THREE.Path(); p.absarc(0, 0, r1, -f1, f1, false); p.absarc(dd, 0, r2, Math.PI - f2, Math.PI + f2, false); return p; }
 
@@ -125,13 +128,17 @@ window.OffsetFlange3D = function (box, opt) {
     lathe(ring, [[hd / 2, 2], [ro, 2], [ro, H - 1], [M.cb, H - 1], [M.cb, H - 3], [hd / 2, H - 3]], mRing, x, -y);
   });
 
-  // ---- 편심 인서트 ----
+  // ---- 편심 인서트 (정심이면 배관이 인서트 바로 아래로 이어짐) ----
   const ins = new THREE.Group();
   lathe(ins, M.insert, mIns);
-  const floor = circ(new THREE.Shape(), 0, 0, M.floorR, false); floor.holes.push(lens());
-  slab(ins, floor, D.Z_PLATE_TOP, D.Z_FLOOR_TOP - D.Z_PLATE_TOP, mIns);
-  const ceil = circ(new THREE.Shape(), dd, 0, P.PIPE_OD / 2, false); ceil.holes.push(lens());
-  slab(ins, ceil, D.Z_PLATE_BOT, D.Z_PLATE_TOP - D.Z_PLATE_BOT, mIns);
+  if (dd) {
+    const floor = circ(new THREE.Shape(), 0, 0, M.floorR, false); floor.holes.push(lens());
+    slab(ins, floor, D.Z_PLATE_TOP, D.Z_FLOOR_TOP - D.Z_PLATE_TOP, mIns);
+    const ceil = circ(new THREE.Shape(), dd, 0, P.PIPE_OD / 2, false); ceil.holes.push(lens());
+    slab(ins, ceil, D.Z_PLATE_BOT, D.Z_PLATE_TOP - D.Z_PLATE_BOT, mIns);
+  } else {
+    lathe(ins, [[r1, -4.5], [P.PIPE_OD / 2, -4.5], [P.PIPE_OD / 2, -3], [r1, -3]], mIns);
+  }
   lathe(ins, M.pipe, mIns, dd, 0);
   // 배관 아래쪽 홈에 끼운 O-링 (단면이 둥근 고무링, 인서트와 함께 움직임)
   const pipeOring = [];
@@ -140,7 +147,7 @@ window.OffsetFlange3D = function (box, opt) {
 
   // ---- O-링 ----
   const orr = new THREE.Group();
-  lathe(orr, M.oring, mOr);
+  lathe(orr, opt.packing || M.oring, mOr); // opt.packing: 인서트 윗면 패킹 단면 [[r, z], ...]
 
   const all = new THREE.Group(); all.add(ring, ins, orr); scene.add(all);
 

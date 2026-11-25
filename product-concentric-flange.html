@@ -13,7 +13,7 @@
   <link rel="canonical" href="https://sungjinkorea.com/product-concentric-flange.html">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/static/pretendard.min.css">
-  <link rel="stylesheet" href="styles.css?v=20261124d">
+  <link rel="stylesheet" href="styles.css?v=20261126a">
   <script>document.documentElement.classList.add('js');</script>
 </head>
 <body class="sub-page">
@@ -78,6 +78,12 @@
             <input type="range" id="rot" min="0" max="180" step="1" value="0">
             <output id="rotOut" for="rot">0°</output>
           </div>
+          <!-- O-링 끼울 홈 선택: 위쪽 홈 = 신형 배관용, 아래쪽 홈 = 구형 배관용 -->
+          <div class="v-bar" role="group" aria-label="O-링 위치">
+            <span class="v-label">O-링 위치</span>
+            <button type="button" id="bNew" aria-pressed="true">신형 배관용 (위 홈)</button>
+            <button type="button" id="bOld" aria-pressed="false">구형 배관용 (아래 홈)</button>
+          </div>
         </div>
 
         <!-- 제품 정보 -->
@@ -88,6 +94,8 @@
 
           <ul class="pd-points">
             <li><b>정심 구조</b>배관 중심이 링 중심과 같아 편심 없이 바로 연결됩니다.</li>
+            <li><b>배관 겸용</b>배관 아래쪽 홈 두 개 중 위쪽은 신형 배관용, 아래쪽은 구형 배관용입니다. 맞는 홈을 골라 O-링을 끼워 사용합니다.</li>
+            <li><b>냄새 걱정 없음</b>O-링이 바닥 배수관 안쪽 벽에 밀착되어 하수 냄새가 올라올 걱정이 없습니다.</li>
             <li><b>구성</b>일체형 본체에 패킹과 O-링만 끼우면 됩니다. T볼트 · 와셔 · 캡 각 2개가 함께 들어 있습니다.</li>
             <li><b>보강 리브</b>플랜지 안쪽에 보강 리브가 들어가 있습니다.</li>
           </ul>
@@ -149,7 +157,7 @@
   <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/environments/RoomEnvironment.js"></script>
-  <script src="js/offset-flange-3d.js?v=20261126d"></script>
+  <script src="js/offset-flange-3d.js?v=20261126e"></script>
   <script>
     (function () {
       const stage = document.getElementById('stage');
@@ -160,6 +168,7 @@
         offset: 0,
         oneBody: true,
         tilt: 55, // 조립 뒤 앞으로 55° 기울여 아래 배관(홈 2개)을 보여줌
+        oringGroove: 'upper', // 처음엔 신형 배관용(위 홈)에 O-링
         colors: { ring: 0x2e3135, oring: 0x141414 },
         packing: [[44, 16], [52.5, 16], [52.6, 13.05], [57.9, 13.05], [57.9, 19], [44, 19]],
       };
@@ -184,6 +193,15 @@
       });
       // 원위치: 끌어 옮긴 부품을 제자리로 + 기본 시점으로
       document.getElementById('bHome').addEventListener('click', () => { v.reset(); v.view('iso'); });
+      // O-링 홈 선택
+      const bNew = document.getElementById('bNew'), bOld = document.getElementById('bOld');
+      function pickGroove(which) {
+        v.oringGroove(which);
+        bNew.setAttribute('aria-pressed', which === 'upper');
+        bOld.setAttribute('aria-pressed', which === 'lower');
+      }
+      bNew.addEventListener('click', () => pickGroove('upper'));
+      bOld.addEventListener('click', () => pickGroove('lower'));
       const rot = document.getElementById('rot');
       const out = document.getElementById('rotOut');
       rot.addEventListener('input', () => { v.rotateInsert(+rot.value); out.textContent = rot.value + '°'; });

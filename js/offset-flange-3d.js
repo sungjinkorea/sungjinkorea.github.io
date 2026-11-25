@@ -174,8 +174,9 @@ window.OffsetFlange3D = function (box, opt) {
   // O-링은 인서트 윗부분 홈(카운터보어)에 들어감 → 인서트보다 위에서 내려옴
   ins.userData = { lift: 55, off: new THREE.Vector3(), k: 0, introDelay: 0 };
   orr.userData = { lift: opt.oneBody ? 55 : 82, off: new THREE.Vector3(), k: 0, introDelay: opt.oneBody ? 450 : 700 };
-  // 일체형: 배관 O-링은 아래에서 올라와 홈에 끼워짐
-  pipeOr.userData = { lift: -45, off: new THREE.Vector3(), k: 0, introDelay: 0 };
+  // 일체형: 배관 O-링은 아래에서 올라와 홈에 끼워짐. base = 어느 홈에 끼울지 (0: 아래쪽 홈, 14.25: 위쪽 홈)
+  const GROOVE_SHIFT = { lower: 0, upper: 14.25 };
+  pipeOr.userData = { lift: -45, off: new THREE.Vector3(), k: 0, introDelay: 0, base: GROOVE_SHIFT[opt.oringGroove] || 0, baseTo: GROOVE_SHIFT[opt.oringGroove] || 0 };
   let clipOn = false;
 
   // ---- 시점 ----
@@ -324,7 +325,9 @@ window.OffsetFlange3D = function (box, opt) {
     if (intro) stepIntro(performance.now());
     if (spin) stepSpin(performance.now());
     explode += (explodeTo - explode) * 0.12;
-    PARTS.forEach((g) => { g.position.set(g.userData.off.x, g.userData.lift * (explode + g.userData.k) + g.userData.off.y, g.userData.off.z); });
+    // base: O-링 홈 바꾸기 — 배관을 따라 굴러가듯 부드럽게 이동
+    pipeOr.userData.base += (pipeOr.userData.baseTo - pipeOr.userData.base) * (reduce ? 1 : 0.1);
+    PARTS.forEach((g) => { g.position.set(g.userData.off.x, (g.userData.base || 0) + g.userData.lift * (explode + g.userData.k) + g.userData.off.y, g.userData.off.z); });
     ctl.update(); renderer.render(scene, cam);
   }
   if (!opt.still) (function tick() { frame(); requestAnimationFrame(tick); })();
@@ -340,6 +343,8 @@ window.OffsetFlange3D = function (box, opt) {
       if (on) { if (intro) intro.userCam = true; view('front'); }
     },
     rotateInsert(deg) { spin = null; insDeg = deg; if (!intro) applyTurn(deg); },
+    // 일체형: O-링을 끼울 홈 선택 ('upper' 위쪽 홈 / 'lower' 아래쪽 홈)
+    oringGroove(which) { pipeOr.userData.baseTo = GROOVE_SHIFT[which] || 0; },
     reset: resetOffsets,
     render: frame,
     canvas: cv,

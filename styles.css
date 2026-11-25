@@ -443,6 +443,7 @@ a.item { color: inherit; }
 .v-bar button[aria-pressed="true"] { background: var(--blue); border-color: var(--blue); color: var(--white); }
 .v-bar button:disabled { opacity: .4; cursor: default; }
 .v-bar button:focus-visible { outline: 3px solid rgba(22,119,255,.35); outline-offset: 2px; }
+.v-bar .v-label { align-self: center; margin-right: 4px; font-size: 15px; font-weight: 600; color: var(--gray-700); }
 .v-sep { flex: 1; }
 .v-spin { display: flex; align-items: center; gap: 14px; margin-top: 14px; padding: 12px 20px; border-radius: 999px; background: var(--gray-50); font-size: 15px; font-weight: 600; color: var(--gray-700); }
 .v-spin input { flex: 1; accent-color: var(--blue); height: 32px; }
